@@ -1,0 +1,4 @@
+Filename	Category Code	Column Number	Data Label	Data Label Source	Control Vocab Cd
+GSE8581_data.txt	Subjects	1	SUBJ_ID
+GSE8581_data.txt	Endpoints	2	FEV1
+GSE8581_data.txt	Subjects	3	NEW_VAR

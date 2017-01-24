@@ -2,12 +2,15 @@ package org.transmartproject.batch.facts
 
 import groovy.util.logging.Slf4j
 import org.springframework.batch.item.ItemWriter
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert
 import org.springframework.stereotype.Component
 import org.transmartproject.batch.beans.JobScopeInterfaced
 import org.transmartproject.batch.clinical.db.objects.Tables
+import org.transmartproject.batch.tag.Tag
 
 /**
  * Database writer of observation facts, based on FactRowSets
@@ -17,8 +20,14 @@ import org.transmartproject.batch.clinical.db.objects.Tables
 @Slf4j
 class ObservationFactTableWriter implements ItemWriter<ClinicalFactsRowSet> {
 
+    @Value("#{jobParameters['INCREMENTAL']}")
+    String incremental
+
     @Value(Tables.OBSERVATION_FACT)
     private SimpleJdbcInsert insert
+
+    @Autowired
+    NamedParameterJdbcTemplate jdbcTemplate
 
     @Override
     void write(List<? extends ClinicalFactsRowSet> items) throws Exception {
@@ -27,6 +36,15 @@ class ObservationFactTableWriter implements ItemWriter<ClinicalFactsRowSet> {
 
         items.each {
             rows.addAll it.clinicalFacts*.databaseRow
+        }
+
+        if (incremental == 'Y') {
+            List<Integer> deleteCounts = jdbcTemplate.batchUpdate("""
+                    DELETE FROM ${Tables.OBSERVATION_FACT}
+                    WHERE patient_num = :patient_num and concept_cd = :concept_cd
+                """,
+                    rows.collect { [patient_num: it.patient_num, concept_cd: it.concept_cd] } as Map[]
+            )
         }
 
         Map<String, Object>[] array = rows as Map<String, Object>[]

@@ -67,6 +67,10 @@ final class RunJob {
     static RunJob createInstance(String... args) {
         def cliBuilder = createCliBuilder()
         OptionAccessor opts = cliBuilder.parse(args)
+        if (!opts) {
+            cliBuilder.usage()
+            System.exit 1
+        }
         RunJob runJobInstance = new RunJob(opts)
         runJobInstance
     }

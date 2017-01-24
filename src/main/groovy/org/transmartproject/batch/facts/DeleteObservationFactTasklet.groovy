@@ -1,6 +1,11 @@
 package org.transmartproject.batch.facts
 
 import groovy.util.logging.Slf4j
+import org.springframework.batch.core.StepContribution
+import org.springframework.batch.core.scope.context.ChunkContext
+import org.springframework.batch.repeat.RepeatStatus
+import org.springframework.beans.factory.annotation.Value
+import org.transmartproject.batch.beans.JobScopeInterfaced
 import org.transmartproject.batch.concept.ConceptPath
 import org.transmartproject.batch.db.GenericTableUpdateTasklet
 import org.transmartproject.batch.support.StringUtils
@@ -12,11 +17,15 @@ import java.sql.SQLException
  * Deletes observation facts (that are not highdim) for a study
  */
 @Slf4j
+@JobScopeInterfaced
 class DeleteObservationFactTasklet extends GenericTableUpdateTasklet {
 
     boolean highDim = false
 
     Collection<ConceptPath> basePaths = Collections.emptyList() // optional
+
+    @Value("#{jobParameters['INCREMENTAL']}")
+    String incremental
 
     void setBasePath(ConceptPath path) {
         basePaths = [path]
@@ -53,4 +62,15 @@ class DeleteObservationFactTasklet extends GenericTableUpdateTasklet {
             ps.setString(i + 3, StringUtils.escapeForLike(basePath.toString(), '\\'))
         }
     }
+
+    @Override
+    RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        if (incremental != 'Y') {
+            super.execute(contribution, chunkContext)
+        } else {
+            log.info('Skip on removing observations as it is incremental upload.')
+        }
+        RepeatStatus.FINISHED
+    }
+
 }

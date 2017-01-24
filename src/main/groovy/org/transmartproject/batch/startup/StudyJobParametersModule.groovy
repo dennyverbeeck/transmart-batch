@@ -9,9 +9,10 @@ final class StudyJobParametersModule implements ExternalJobParametersModule {
     public static final String STUDY_ID = 'STUDY_ID' /* can be a platform name */
     public static final String TOP_NODE = 'TOP_NODE'
     public static final String SECURITY_REQUIRED = 'SECURITY_REQUIRED'
+    public static final String INCREMENTAL = 'INCREMENTAL'
 
     final Set<String> supportedParameters =
-            [STUDY_ID, TOP_NODE, SECURITY_REQUIRED]
+            [STUDY_ID, TOP_NODE, SECURITY_REQUIRED, INCREMENTAL]
 
     void validate(ExternalJobParametersInternalInterface ejp) {
         mandatory(ejp, STUDY_ID)
@@ -20,6 +21,7 @@ final class StudyJobParametersModule implements ExternalJobParametersModule {
     void munge(ExternalJobParametersInternalInterface ejp)
             throws InvalidParametersFileException {
         mungeBoolean(ejp, SECURITY_REQUIRED, true)
+        mungeBoolean(ejp, INCREMENTAL, false)
 
         if (!ejp[TOP_NODE]) {
             def prefix = ejp[SECURITY_REQUIRED] == 'Y' ?
